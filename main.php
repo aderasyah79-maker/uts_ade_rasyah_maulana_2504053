@@ -1,4 +1,3 @@
-
 <?php
 session_start();
 
@@ -19,7 +18,6 @@ if (!$query_terbaru) {
 
 $data_terbaru = mysqli_fetch_assoc($query_terbaru);
 
-// Menentukan status berdasarkan tinggi gelombang terbaru
 $tinggi = isset($data_terbaru['tinggi'])
     ? (float) $data_terbaru['tinggi']
     : null;
@@ -51,6 +49,35 @@ $hasil = mysqli_query(
 if (!$hasil) {
     die("Query tabel gagal: " . mysqli_error($koneksi));
 }
+
+$query_grafik = mysqli_query(
+    $koneksi,
+    "SELECT waktu, tinggi
+     FROM pengukuran
+     ORDER BY waktu DESC
+     LIMIT 10"
+);
+
+if (!$query_grafik) {
+    die("Query grafik gagal: " . mysqli_error($koneksi));
+}
+
+$label_grafik = [];
+$data_grafik = [];
+
+while ($row_grafik = mysqli_fetch_assoc($query_grafik)) {
+    // Format waktu agar lebih ringkas
+    $label_grafik[] = date(
+        'H:i',
+        strtotime($row_grafik['waktu'])
+    );
+
+    $data_grafik[] = (float) $row_grafik['tinggi'];
+}
+
+// Urutkan dari waktu paling lama ke paling baru
+$label_grafik = array_reverse($label_grafik);
+$data_grafik = array_reverse($data_grafik);
 ?>
 
 
@@ -185,47 +212,50 @@ if (!$hasil) {
       <div class="row g-3 mb-3">
         <div class="col-lg-8">
           <div class="glass-box h-100 p-3 p-md-4">
-            <div class="judul-box mb-3"><i class="bi bi-graph-up-arrow me-2" style="color:#0b666a;"></i>Grafik Tinggi Gelombang</div>
-            <div style="position: relative; height: 250px;">
-              <canvas id="grafikGelombang"></canvas>
-            </div>
+              <div class="judul-box mb-3">
+                  <i class="bi bi-graph-up-arrow me-2"
+                    style="color:#0b666a;"></i>
+                  Grafik Tinggi Gelombang
+              </div>
+
+              <div style="position: relative; height: 250px;">
+                  <canvas id="grafikGelombang"></canvas>
+              </div>
           </div>
-        </div>
-        
-<div class="col-lg-4">
-    <div id="kartuStatus"
-         class="h-100 p-4 text-white text-center d-flex flex-column justify-content-center align-items-center"
-         style="
-            border-radius: 22px;
-            background: <?= htmlspecialchars($warnaStatus) ?>;
-            box-shadow: 0 18px 40px rgba(0,0,0,0.28);
-            border: 1px solid rgba(255,255,255,0.3);
-         ">
+      </div> 
+          <div class="col-lg-4">
+              <div id="kartuStatus"
+                  class="h-100 p-4 text-white text-center d-flex flex-column justify-content-center align-items-center"
+                  style="
+                      border-radius: 22px;
+                      background: <?= htmlspecialchars($warnaStatus) ?>;
+                      box-shadow: 0 18px 40px rgba(0,0,0,0.28);
+                      border: 1px solid rgba(255,255,255,0.3);
+                  ">
 
-        <i class="bi <?= htmlspecialchars($ikonStatus) ?>"
-           style="font-size: 3rem;"></i>
+                  <i class="bi <?= htmlspecialchars($ikonStatus) ?>"
+                    style="font-size: 3rem;"></i>
 
-        <div class="small fw-semibold mt-2" style="opacity: 0.85;">
-            Status Kondisi
-        </div>
+                  <div class="small fw-semibold mt-2" style="opacity: 0.85;">
+                      Status Kondisi
+                  </div>
 
-        <div class="fw-bold"
-             style="font-size: 2rem; letter-spacing: 0.05em;">
-            <?= htmlspecialchars($status) ?>
-        </div>
+                  <div class="fw-bold"
+                      style="font-size: 2rem; letter-spacing: 0.05em;">
+                      <?= htmlspecialchars($status) ?>
+                  </div>
 
-        <p class="small mt-2 mb-0" style="opacity: 0.9;">
-            Tinggi gelombang saat ini
-            <strong>
-                <?= $tinggi === null
-                    ? '-'
-                    : htmlspecialchars((string) $data_terbaru['tinggi']) ?>
-            </strong>
-            m
-        </p>
-    </div>
-</div>
-
+                  <p class="small mt-2 mb-0" style="opacity: 0.9;">
+                      Tinggi gelombang saat ini
+                      <strong>
+                          <?= $tinggi === null
+                              ? '-'
+                              : htmlspecialchars((string) $data_terbaru['tinggi']) ?>
+                      </strong>
+                      m
+                  </p>
+              </div>
+          </div>
       </div>
 
       <!-- Tabel data terbaru -->
@@ -294,6 +324,68 @@ if (!$hasil) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+<script>
+const canvasGrafik = document.getElementById('grafikGelombang');
 
+const labelGrafik = <?= json_encode(
+    $label_grafik,
+    JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
+) ?>;
+
+const dataGrafik = <?= json_encode(
+    $data_grafik,
+    JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
+) ?>;
+
+new Chart(canvasGrafik, {
+    type: 'line',
+
+    data: {
+        labels: labelGrafik,
+        datasets: [{
+            label: 'Tinggi Gelombang (m)',
+            data: dataGrafik,
+            borderColor: '#0b666a',
+            backgroundColor: 'rgba(11, 102, 106, 0.15)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.35,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#071952'
+        }]
+    },
+
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top'
+            }
+        },
+
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: 'Waktu Pengukuran'
+                }
+            },
+
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Tinggi Gelombang (m)'
+                }
+            }
+        }
+    }
+});
+</script>
   </body>
 </html>
