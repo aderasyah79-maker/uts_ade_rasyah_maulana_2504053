@@ -158,7 +158,7 @@ $data_grafik = array_reverse($data_grafik);
     <div class="container py-4 py-md-5">
 
       <div class="mb-4 text-white">
-        <h4 class="fw-bold mb-1">Selamat Datang, Nama Petugas</h4>
+        <h4 class="fw-bold mb-1">Selamat Datang, <?php echo $_SESSION['nama'];?> Petugas</h4>
         <p class="small mb-0" style="color: rgba(255,255,255,0.75);">Berikut kondisi gelombang laut terkini di stasiun pengamatan.</p>
       </div>
 
