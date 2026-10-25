@@ -147,10 +147,10 @@ $data_grafik = array_reverse($data_grafik);
         </div>
         <div class="d-flex align-items-center gap-3">
           <div class="text-end">
-            <div class="fw-semibold"><i class="bi bi-person-badge-fill me-1"></i>Nama Petugas</div>
+            <div class="fw-semibold"><i class="bi bi-person-badge-fill me-1"></i><?php echo $_SESSION['nama'];?></div>
             <small class="text-white-50">Petugas</small>
           </div>
-          <a href="#" class="btn btn-keluar"><i class="bi bi-box-arrow-right me-1"></i>Keluar</a>
+          <a href="logout.php" class="btn btn-keluar"><i class="bi bi-box-arrow-right me-1"></i>Keluar</a>
         </div>
       </div>
     </nav>
